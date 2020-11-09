@@ -1,0 +1,103 @@
+
+'''
+t=Place(1,'Place nr 1','Theater','51.21552663','4.405887211')
+t.print_place_details()
+
+p=Person(1,'Landyn Greer','Healthy','2020-10-09T16:42:55','51.21156341','4.40950761')
+p.print_person_details()
+
+v=Visit(1,p,t,'2020-10-16T06:45:53','2020-10-16T08:04:41')
+
+v.print_visit_details()
+'''
+#plt.show()
+
+#pos=nx.spring_layout(g,scale=2)
+#nx.draw(g,pos)
+#plt.show()
+
+g.add_node('Place_'+str(row['PlaceId']))
+    g.add_node('Person_'+str(row['PersonId']))
+    g.add_edge('Person_'+str(row['PersonId']),'Place_'+str(row['PlaceId']))
+
+
+pos = nx.spring_layout(g)
+nx.draw(g,pos,with_label=True)
+plt.savefig('graph.png')
+
+
+
+
+options = {"node_size": 500, "alpha": 0.8}
+pos = nx.spring_layout(g)
+
+#Creating Labels dictionary
+edge_labels=nx.get_edge_attributes(g,'weight')
+
+nx.draw_networkx_nodes(g, pos,list(visit_df['PersonId']), node_color="b", **options)
+#nx.draw_networkx_nodes(g, pos,list(visit_df['PlaceId']), node_color="b", **options)
+nx.draw_networkx_edges(g, pos, width=1.0, alpha=0.5)
+
+labels=dict()
+for node in visit_df['PersonId']:
+    labels[node]=node[-1:]
+
+nx.draw_networkx_labels(g, pos,labels=labels,font_size=10,font_color="w")
+
+e_labels = nx.get_edge_attributes(g,'weight')
+nx.draw_networkx_edge_labels(g,pos,edge_labels=e_labels,font_size=6)
+plt.savefig('graph_sir.png')
+
+for node in g.nodes:
+    g.nodes[node]["visited"]=False
+
+
+root='Y'
+root="Person_"+root
+count=1
+g.nodes[root]["visited"]=True
+
+nx.draw_networkx_nodes(g, pos,[root],node_color="r", **options)
+plt.savefig('graph_sir_'+str(count)+'.png')
+
+neighbor_list=list(g.neighbors(root))
+while neighbor_list:
+    temp=neighbor_list.pop(0)
+    if g[root][temp]["weight"]>15 and g.nodes[temp]["visited"] is False:
+        g.nodes[temp]["visited"]=True
+        nx.draw_networkx_nodes(g, pos,[temp],node_color="r", **options)
+        count=count+1
+        plt.savefig('graph_sir_'+str(count)+'.png')
+    root=temp
+    for node in list(g.neighbors(root)):
+        if g.nodes[node]["visited"] is False:
+            neighbor_list.append(node)
+
+'''
+while neighbor_list:
+    temp=neighbor_list.pop(0)
+    if g[root][temp]["weight"]>15:
+        nx.draw_networkx_nodes(g, pos,list(temp),node_color="r", **options)
+        count=count+1
+        plt.savefig('graph_sir_'+str(count)+'.png')
+'''
+
+
+centrality_dict=nx.degree_centrality(g)
+sg=nx.connected_components(g)
+sg_count=nx.number_connected_components(g)
+
+
+while sg_count<len(g.nodes)//2:
+    centrality_dict=nx.degree_centrality(g)
+    central_node=max(centrality_dict.items(), key=operator.itemgetter(1))[0]
+
+    for edge in g.edges:
+        if central_node in edge:
+            g.remove_edge(edge[0],edge[1])
+
+    sg_count=nx.number_connected_components(g)
+    sg=nx.connected_components(g)
+    print(list(sg))
+
+    http://www.sociopatterns.org/datasets/high-school-contact-and-friendship-networks/
